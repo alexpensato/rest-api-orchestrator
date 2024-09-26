@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{admin/layout}">
+<head>
+    <title>Filter Scripts</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.0/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <style>
+        #editor {
+            height: 300px;
+        }
+        #visualizer {
+            height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div layout:fragment="content">
+        <h2>Filter Scripts</h2>
+        <div class="form-group">
+            <label for="endpoint-select">Select Endpoint:</label>
+            <select id="endpoint-select" class="form-control">
+                <option value="">Select an endpoint</option>
+                <option th:each="endpoint : ${endpoints}" th:value="${endpoint.name}" th:text="${endpoint.name}"></option>
+            </select>
+        </div>
+        <div id="editor"></div>
+        <button id="save-script" class="btn btn-primary mt-2">Save Script</button>
+        <h3 class="mt-4">Request Visualizer</h3>
+        <div id="visualizer"></div>
+
+        <script th:inline="javascript">
+            const editor = ace.edit("editor");
+            editor.setTheme("ace/theme/monokai");
+            editor.session.setMode("ace/mode/javascript");
+
+            const endpointSelect = document.getElementById('endpoint-select');
+            const saveButton = document.getElementById('save-script');
+            const visualizer = document.getElementById('visualizer');
+
+            endpointSelect.addEventListener('change', function() {
+                const endpoint = this.value;
+                if (endpoint) {
+                    fetch(`/admin/filter-scripts/${endpoint}`)
+                        .then(response => response.text())
+                        .then(script => editor.setValue(script));
+                } else {
+                    editor.setValue('');
+                }
+            });
+
+            saveButton.addEventListener('click', function() {
+                const endpoint = endpointSelect.value;
+                const script = editor.getValue();
+                if (endpoint) {
+                    fetch(`/admin/filter-scripts/${endpoint}`, {
+                        method: 'POST',
+                        body: script,
+                        headers: {
+                            'Content-Type': 'text/plain'
+                        }
+                    }).then(response => {
+                        if (response.ok) {
+                            alert('Script saved successfully');
+                        } else {
+                            alert('Failed to save script');
+                        }
+                    });
+                } else {
+                    alert('Please select an endpoint');
+                }
+            });
+
+            // WebSocket connection
+            const socket = new SockJS('/ws');
+            const stompClient = Stomp.over(socket);
+
+            stompClient.connect({}, function(frame) {
+                console.log('Connected: ' + frame);
+                stompClient.subscribe('/topic/requests', function(message) {
+                    const request = JSON.parse(message.body);
+                    visualizeRequest(request);
+                });
+            });
+
+            function visualizeRequest(request) {
+                const requestDiv = document.createElement('div');
+                requestDiv.innerHTML = `
+                    <h4>Request to ${request.endpoint}</h4>
+                    <pre>${JSON.stringify(request.data, null, 2)}</pre>
+                    <hr>
+                `;
+                visualizer.prepend(requestDiv);
+            }
+        </script>
+    </div>
+</body>
+</html>

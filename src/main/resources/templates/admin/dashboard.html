@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{admin/layout}">
+<head>
+    <title>Admin Dashboard</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <h1>Admin Dashboard</h1>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">API Registrations</h5>
+                        <p class="card-text" th:text="${apiCount}"></p>
+                        <a href="/admin/api-registrations" class="btn btn-primary">Manage APIs</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Users</h5>
+                        <p class="card-text" th:text="${userCount}"></p>
+                        <a href="/admin/users" class="btn btn-primary">Manage Users</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="mt-4">
+            <a href="/admin/filter-scripts" class="btn btn-secondary">Manage Filter Scripts</a>
+        </div>
+    </div>
+</body>
+</html>

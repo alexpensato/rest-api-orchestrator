@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{admin/layout}">
+<head>
+    <title>API Registration List</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <h2>API Registration List</h2>
+        <a href="/admin/api-registrations/register" class="btn btn-primary mb-3">Register New API</a>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Base URL</th>
+                    <th>Swagger URL</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="registration : ${registrations}">
+                    <td th:text="${registration.id}"></td>
+                    <td th:text="${registration.name}"></td>
+                    <td th:text="${registration.baseUrl}"></td>
+                    <td th:text="${registration.swaggerUrl}"></td>
+                    <td>
+                        <a th:href="@{/admin/api-registrations/edit/{id}(id=${registration.id})}" class="btn btn-sm btn-warning">Edit</a>
+                        <a th:href="@{/admin/api-registrations/delete/{id}(id=${registration.id})}" class="btn btn-sm btn-danger">Delete</a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
