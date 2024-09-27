@@ -63,4 +63,8 @@ public class UserService {
     public Mono<User> findByEmail(String email) {
         return userRepository.findByEmail(email);
     }
+
+    public Mono<Boolean> verifyPassword(String rawPassword, String encodedPassword) {
+        return Mono.fromCallable(() -> passwordEncoder.matches(rawPassword, encodedPassword));
+    }
 }

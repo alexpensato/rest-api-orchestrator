@@ -2,10 +2,10 @@ package com.pensatocode.orchestrator;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.web.reactive.config.EnableWebFlux;
+import org.springframework.context.annotation.ComponentScan;
 
-@SpringBootApplication(scanBasePackages = "com.pensatocode.orchestrator")
-@EnableWebFlux
+@SpringBootApplication
+@ComponentScan(basePackages = "com.pensatocode.orchestrator")
 public class OrchestratorApplication {
 
     public static void main(String[] args) {

@@ -2,26 +2,39 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <title>Admin Login</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 </head>
 <body>
-    <div class="container mt-5">
-        <h2>Admin Login</h2>
-        <form th:action="@{/admin/login}" method="post">
-            <div class="form-group">
-                <label for="username">Username:</label>
-                <input type="text" class="form-control" id="username" name="username" required>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <h2 class="mb-4">Admin Login</h2>
+            <form th:action="@{/admin/login}" method="post">
+                <div class="form-group">
+                    <label for="username">Username:</label>
+                    <input type="text" class="form-control" id="username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password:</label>
+                    <input type="password" class="form-control" id="password" name="password" required>
+                </div>
+                <div class="form-group">
+                    <label for="totpCode">TOTP Code:</label>
+                    <input type="text" class="form-control" id="totpCode" name="totpCode" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Login</button>
+            </form>
+            <div th:if="${param.error}" class="alert alert-danger mt-3">
+                <p th:text="${param.error == 'invalid_credentials'} ? 'Invalid username or password' :
+                                 (${param.error == 'invalid_totp'} ? 'Invalid TOTP code' :
+                                 (${param.error == 'user_not_found'} ? 'User not found' : 'Login failed'))">
+                    Login failed
+                </p>
             </div>
-            <div class="form-group">
-                <label for="password">Password:</label>
-                <input type="password" class="form-control" id="password" name="password" required>
-            </div>
-            <div class="form-group">
-                <label for="totpCode">TOTP Code:</label>
-                <input type="text" class="form-control" id="totpCode" name="totpCode" required>
-            </div>
-            <button type="submit" class="btn btn-primary">Login</button>
-        </form>
+        </div>
     </div>
+</div>
 </body>
 </html>

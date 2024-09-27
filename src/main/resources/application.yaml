@@ -9,6 +9,12 @@ spring:
     init:
       mode: always
       schema-locations: classpath:schema.sql
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    cache: false
+  webflux:
+    base-path: /
 
 encryption:
   secret:
@@ -26,4 +32,10 @@ springdoc:
 logging:
   level:
     root: INFO
-    com.example.orchestrator: DEBUG
+    com.pensatocode.orchestrator: DEBUG
+    org.springframework.security: DEBUG
+    reactor.netty.http.client: DEBUG
+    org.springframework.web: DEBUG
+    org.springframework.web.reactive: DEBUG
+    org.thymeleaf: TRACE
+    org.springframework.boot.autoconfigure.thymeleaf: TRACE

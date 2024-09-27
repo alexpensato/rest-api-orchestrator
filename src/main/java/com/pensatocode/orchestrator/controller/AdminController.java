@@ -6,9 +6,9 @@ import com.pensatocode.orchestrator.service.ApiRegistrationService;
 import com.pensatocode.orchestrator.service.FilterScriptService;
 import com.pensatocode.orchestrator.service.TotpService;
 import com.pensatocode.orchestrator.service.UserService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -16,7 +16,7 @@ import reactor.core.publisher.Mono;
 
 @Controller
 @RequestMapping("/admin")
-@PreAuthorize("hasRole('ADMIN')")
+@Slf4j
 public class AdminController {
 
     @Autowired
@@ -31,27 +31,47 @@ public class AdminController {
     @Autowired
     private FilterScriptService filterScriptService;
 
-    @GetMapping
-    public Mono<String> adminDashboard(Model model) {
-        return Mono.zip(
-                apiRegistrationService.getApiCount(),
-                userService.getUserCount()
-        ).doOnNext(tuple -> {
-            model.addAttribute("apiCount", tuple.getT1());
-            model.addAttribute("userCount", tuple.getT2());
-        }).thenReturn("admin/dashboard");
-    }
-
     @GetMapping("/login")
     public Mono<String> loginPage() {
+        log.info("Getting the login page");
         return Mono.just("admin/login");
     }
 
     @PostMapping("/login")
-    public Mono<String> verifyTotp(@RequestParam String username, @RequestParam String password, @RequestParam String totpCode) {
-        return totpService.verifyCode(username, totpCode)
-                .flatMap(isValid -> isValid ? Mono.just("redirect:/admin") : Mono.just("redirect:/admin/login?error"));
+    public Mono<String> verifyLogin(@RequestParam String username,
+                                    @RequestParam String password,
+                                    @RequestParam String totpCode) {
+        log.info("User {} trying to login with {} and {}", username, password, totpCode);
+        return userService.findByUsername(username)
+                .flatMap(user -> userService.verifyPassword(password, user.getPassword())
+                        .flatMap(passwordValid -> {
+                            if (passwordValid) {
+                                return totpService.verifyCode(username, totpCode)
+                                        .map(totpValid -> totpValid ? "redirect:/admin/dashboard" : "redirect:/admin/login?error=invalid_totp");
+                            } else {
+                                return Mono.just("redirect:/admin/login?error=invalid_credentials");
+                            }
+                        }))
+                .defaultIfEmpty("redirect:/admin/login?error=user_not_found");
     }
+
+    @GetMapping("/dashboard")
+    public Mono<String> dashboard(Model model) {
+        // Add any necessary model attributes for the dashboard
+        return Mono.just("admin/dashboard");
+    }
+
+//    @GetMapping
+//    @PreAuthorize("hasRole('ADMIN')")
+//    public Mono<String> adminDashboard(Model model) {
+//        return Mono.zip(
+//                apiRegistrationService.getApiCount(),
+//                userService.getUserCount()
+//        ).doOnNext(tuple -> {
+//            model.addAttribute("apiCount", tuple.getT1());
+//            model.addAttribute("userCount", tuple.getT2());
+//        }).thenReturn("admin/dashboard");
+//    }
 
     @GetMapping("/users")
     public Mono<String> userList(Model model) {
@@ -123,14 +143,12 @@ public class AdminController {
     }
 
     @PostMapping("/filter-scripts/{endpoint}")
-    @ResponseBody
     public Mono<ResponseEntity<String>> saveFilterScript(@PathVariable String endpoint, @RequestBody String script) {
         return filterScriptService.saveScript(endpoint, script)
                 .thenReturn(ResponseEntity.ok("Script saved successfully"));
     }
 
     @GetMapping("/filter-scripts/{endpoint}")
-    @ResponseBody
     public Mono<ResponseEntity<String>> getFilterScript(@PathVariable String endpoint) {
         return filterScriptService.getScript(endpoint)
                 .map(ResponseEntity::ok)
@@ -138,21 +156,18 @@ public class AdminController {
     }
 
     @DeleteMapping("/filter-scripts/{endpoint}")
-    @ResponseBody
     public Mono<ResponseEntity<String>> deleteFilterScript(@PathVariable String endpoint) {
         return filterScriptService.deleteScript(endpoint)
                 .thenReturn(ResponseEntity.ok("Script deleted successfully"));
     }
 
     @GetMapping("/generate-totp/{username}")
-    @ResponseBody
     public Mono<ResponseEntity<String>> generateTotp(@PathVariable String username) {
         return totpService.generateSecretKey(username)
                 .map(secretKey -> ResponseEntity.ok("TOTP secret generated for " + username));
     }
 
     @GetMapping("/totp-qr/{username}")
-    @ResponseBody
     public Mono<ResponseEntity<String>> getTotpQr(@PathVariable String username) {
         return totpService.getQrCodeUrl(username)
                 .map(ResponseEntity::ok);
